@@ -578,9 +578,9 @@
             const targetCount = 10; // Number of tiles to generate
             const size = 0.0018;
             const minDist = size * 2.8;
-
+            statusText.innerText = `Loading AI neural network...`;
             for(let i=0; i < targetCount; i++) {
-                statusText.innerText = `SCANNING SECTOR ${i + 1}/${targetCount}`;
+
                 
                 let lat, lng, valid = false;
                 let attempts = 0;
@@ -618,6 +618,7 @@
                 if (zone.issue.name === u.issue) q += 30; // .name added
 
                 createTile(lat, lng, size, zone, userPartyColor, q / 100, u.species);
+                statusText.innerText = `SCANNING SECTOR ${i + 1}/${targetCount}`;
             }
 
             statusText.innerText = "SCAN COMPLETE";

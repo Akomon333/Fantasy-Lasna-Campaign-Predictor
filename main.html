@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lasnamäe campaign V3</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+        :root {
+            --bg: #0B0F19;
+            --panel: #151B2B;
+            --border: #2D3748;
+            --text-main: #E2E8F0;
+            --text-muted: #94A3B8;
+            --accent: #38BDF8; 
+            --gold: #F59E0B;   
+            --danger: #F43F5E;
+        }
+
+        body { 
+            font-family: 'Space Grotesk', sans-serif; 
+            margin: 0; 
+            background: var(--bg); 
+            display: flex; 
+            height: 100vh; 
+            color: var(--text-main);
+            overflow: hidden; 
+        }
+
+        #sidebar {
+            width: 360px;
+            background: var(--panel);
+            padding: 25px;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+            overflow-y: auto;
+        }
+
+        .brand {
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand-text h1 { 
+            font-size: 1.4rem; 
+            margin: 0; 
+            letter-spacing: -0.02em; 
+            background: linear-gradient(90deg, #fff, #94A3B8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle { 
+            font-size: 0.75rem; 
+            color: var(--text-muted); 
+            text-transform: uppercase; 
+            letter-spacing: 0.1em; 
+            margin-top: 5px; 
+        }
+
+        #guide-btn {
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.1);
+        }
+        #guide-btn:hover {
+            background: var(--accent);
+            color: var(--bg);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.6);
+            transform: scale(1.05);
+        }
+
+        .control-group { margin-bottom: 20px; }
+        
+        label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
+
+        select {
+            width: 100%;
+            background: #0F172A;
+            border: 1px solid var(--border);
+            color: white;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: inherit;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.9rem;
+        }
+        select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 15px rgba(56, 189, 248, 0.1); }
+
+        .scan-btn {
+            margin-top: auto;
+            background: var(--text-main);
+            color: var(--bg);
+            border: none;
+            padding: 14px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .scan-btn:hover { background: var(--accent); box-shadow: 0 0 20px rgba(56, 189, 248, 0.4); }
+        .scan-btn:disabled { background: #334155; color: #64748B; cursor: not-allowed; box-shadow: none; }
+
+        #map { flex-grow: 1; background: #020409; }
+
+        .leaflet-popup-content-wrapper {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+        .leaflet-popup-content { margin: 0; width: 260px !important; }
+        .leaflet-popup-tip { background: var(--panel); border: 1px solid var(--border); }
+
+        .pop-header {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255,255,255,0.03);
+            font-size: 0.9rem;
+        }
+        
+        .pop-body { padding: 12px; }
+
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px; }
+        .stat-box { 
+            background: rgba(0,0,0,0.3); 
+            border: 1px solid var(--border); 
+            padding: 6px 8px; 
+            border-radius: 4px; 
+        }
+        .stat-label { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 2px; }
+        .stat-val { font-size: 0.85rem; font-weight: 700; }
+
+        .issue-badge {
+            display: flex; align-items: center; gap: 10px;
+            background: rgba(255,255,255,0.05);
+            padding: 8px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border);
+        }
+        .issue-icon { font-size: 1.1rem; }
+        
+        .bar-container { margin-bottom: 8px; }
+        .bar-meta { display: flex; justify-content: space-between; font-size: 0.7rem; margin-bottom: 3px; color: var(--text-muted); }
+        .progress { height: 3px; background: #334155; border-radius: 2px; overflow: hidden; }
+        .fill { height: 100%; transition: width 0.5s; }
+
+        .ruling-tag {
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 3px;
+            background: #333;
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        #status-container {
+            height: 50px;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #status-scanner {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.75rem;
+            color: var(--accent);
+            letter-spacing: 0.1em;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .radar-ping {
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent);
+            border-radius: 50%;
+            position: relative;
+        }
+        .radar-ping::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: var(--accent);
+            border-radius: 50%;
+            animation: ping 1.5s ease-out infinite;
+        }
+        @keyframes ping {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(4); opacity: 0; }
+        }
+
+        .hidden { display: none !important; }
+        #captcha-container { margin-top: 20px; margin-bottom: 10px; display: flex; justify-content: center; }
+
+        #guide-modal {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        #guide-modal.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        .modal-content {
+            background: #111827;
+            border: 1px solid var(--border);
+            border-top: 4px solid var(--gold); /* Bureaucracy Gold */
+            padding: 0;
+            border-radius: 12px;
+            width: 500px;
+            max-width: 95%;
+            box-shadow: 0 0 60px rgba(0, 0, 0, 0.8);
+            text-align: left;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .modal-header {
+            padding: 20px;
+            background: #1F2937;
+            border-bottom: 1px solid var(--border);
+        }
+        .modal-header h2 {
+            margin: 0;
+            color: var(--text-main);
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .modal-body {
+            padding: 20px;
+        }
+        .shop-grid {
+            display: grid;
+            gap: 15px;
+        }
+        .shop-item {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: 0.2s;
+        }
+        .shop-item:hover {
+            border-color: var(--gold);
+            background: rgba(245, 158, 11, 0.05);
+        }
+        .item-info h4 { margin: 0 0 4px 0; font-size: 0.95rem; color: #fff; }
+        .item-info p { margin: 0; font-size: 0.75rem; color: var(--text-muted); }
+        
+        .buy-btn {
+            background: transparent;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            padding: 8px 12px;
+            font-family: inherit;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+        .buy-btn:hover {
+            background: var(--gold);
+            color: #000;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+        }
+
+        .modal-footer {
+            padding: 15px;
+            background: #0B0F19;
+            border-top: 1px solid var(--border);
+            text-align: right;
+        }
+        .close-link {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        .close-link:hover { color: #fff; }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <div class="brand">
+            <div class="brand-text">
+                <h1>Lasnamäe campaign <span style="color:var(--accent)">V3</span></h1>
+                <div class="subtitle">Disclaimer: This was made for Entertainment Only, do not take it seriously</div>
+            </div>
+            <button id="guide-btn" onclick="toggleGuide()" title="Tutorial">?</button>
+        </div>
+
+        <div class="control-group">
+            <label>Your Species</label>
+            <select id="u-species">
+                <option value="Elf">Elf</option>
+                <option value="Wizzard">Wizzard</option>
+            </select>
+
+            <label>Your Age Group</label>
+            <select id="u-age">
+                <option value="Young">Young (18-30)</option>
+                <option value="Adult">Adult (31-60)</option>
+                <option value="Senior">Senior (61+)</option>
+            </select>
+
+            <label>Your Party</label>
+            <select id="u-party">
+                <option value="Centre">Centre (Green)</option>
+                <option value="Liberal">Liberal (Yellow)</option>
+                <option value="SDE">SDE (Red)</option>
+                <option value="Isamaa">Isamaa (Blue)</option>
+                <option value="EKRE">EKRE (Black)</option>
+            </select>
+
+            <label>Your Priority Issue</label>
+            <select id="u-issue">
+                <option value="Pot Holes">Infrastructure (Pot Holes)</option>
+                <option value="Rent Prices">Housing (Rent Prices)</option>
+                <option value="Dragon Attacks">Security (Dragon Attacks)</option>
+                <option value="Public Transport">Transit (Public Transport)</option>
+                <option value="Snow Removal">Services (Snow Removal)</option>
+            </select>
+            
+            <label>Your Class</label>
+            <select id="u-class">
+                <option value="Working Class">Working Class</option>
+                <option value="Middle Class">Middle Class</option>
+                <option value="Elite">Elite</option>
+            </select>
+        </div>
+
+        <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
+        <div id="captcha-container">
+            <div class="g-recaptcha" data-sitekey="6LdhQzksAAAAAPR-p7f7GAXXe1aOr0yOz7xBA_nQ" data-callback="onCaptchaSuccess"></div>
+        </div>
+
+        <button id="scan-btn" class="scan-btn" onclick="generateMap()" disabled title="Please verify you are human first">SCAN SECTOR</button>
+        
+        <div id="status-container">
+            <div id="status-scanner" class="hidden">
+                <div class="radar-ping"></div>
+                <span id="status-text">INITIALIZING RADAR...</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <div id="guide-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>How does the scanner works?</h2>
+        </div>
+        <div class="modal-body">
+            <p style="font-size:0.85rem; color:#94A3B8; margin-top:0; margin-bottom:20px; border-left: 2px solid var(--accent); padding-left: 10px;">
+                <strong>Official Manual:</strong> The scanner uses a weighted algorithm to determine the best tile to campaign in. Tile data is randomly generated. 
+            </p>
+
+            <div class="logic-step">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span style="font-weight:700; color:var(--accent); font-size:0.9rem;">01. User's party popularity</span>
+                    <span style="font-size:0.7rem; color:var(--gold);">Base value</span>
+                </div>
+                <p style="font-size:0.8rem; margin:0 0 15px 0; color:var(--text-main);">
+                    The scanner calls a custom-made <span style="color:var(--gold)">AI Neural Network</span> to predict the user’s chosen party’s popularity in this sector based on the tile’s data.
+                </p>
+            </div>
+
+            <div class="logic-step" style="border-top:1px solid #2D3748; padding-top:15px; margin-top:15px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span style="font-weight:700; color:var(--accent); font-size:0.9rem;">02. Common Factors</span>
+                    <span style="font-size:0.7rem; color:var(--gold);">Maximum +50% weight</span>
+                </div>
+                <p style="font-size:0.8rem; margin:0 0 15px 0; color:var(--text-main);">
+                    The more data the user and the tile have in common, the higher the weight assigned. For example, if both belong to the Working Class, a +10% weight is added.
+                </p>
+            </div>
+
+            <div class="logic-step" style="border-top:1px solid #2D3748; padding-top:15px; margin-top:15px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span style="font-weight:700; color:var(--accent); font-size:0.9rem;">03. Tile data</span>
+                    <span style="font-size:0.7rem; color:var(--text-muted);">How does tile's data generate?</span>
+                </div>
+                <p style="font-size:0.8rem; margin:0 0 15px 0; color:var(--text-main);">
+                   Tiles only appear in Lasnamäe, a real district in Tallinn, Estonia. Everything else, like people’s age, their favorite party, what issues matter to them, etc. is randomly created to show a mix of different people and situations.
+                </p>
+            </div>
+
+            <div style="background:rgba(56, 189, 248, 0.05); padding:10px; border-radius:4px; margin-top:15px; border:1px dashed var(--accent);">
+                <p style="font-size:0.75rem; color:var(--accent); margin:0; text-align:center;">
+                    <strong>VISUAL KEY:</strong> Bright Tiles = High Weight | Dark Tiles = Low Weight
+                </p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="buy-btn" style="width:100%" onclick="toggleGuide()">CLOSE</button>
+        </div>
+    </div>
+</div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const PARTIES = [
+            { name: "Centre", color: "#00E676" },
+            { name: "Liberal", color: "#9F2B68" },
+            { name: "SDE", color: "#FF1744" },
+            { name: "Isamaa", color: "#00B0FF" },
+            { name: "EKRE", color: "#9E9E9E" }
+        ];
+
+        const partyToNumber = {
+            "Centre": 5,
+            "Liberal": 4,
+            "SDE": 2,
+            "Isamaa": 3,
+            "EKRE": 1
+        };
+
+        const ISSUES = [
+            { name: "Pot Holes", icon: "🚧" },
+            { name: "Rent Prices", icon: "💰" },
+            { name: "Dragon Attacks", icon: "🐉" },
+            { name: "Public Transport", icon: "🚌" },
+            { name: "Snow Removal", icon: "❄️" }
+        ];
+
+        const CLASSES = ["Working Class", "Middle Class", "Elite"];
+
+        const BOUNDS = { south: 59.422, north: 59.445, west: 24.790, east: 24.900 };
+
+        let map, layerGroup;
+        let activeTiles = []; // To track collisions
+        let isVerifiedHuman = false;
+
+        window.onload = () => {
+            map = L.map('map', { zoomControl: false }).setView([59.435, 24.845], 13);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; CartoDB',
+                opacity: 1
+            }).addTo(map);
+
+            layerGroup = L.layerGroup().addTo(map);
+        };
+
+        function getDistance(lat1, lng1, lat2, lng2) {
+            return Math.sqrt(Math.pow(lat2 - lat1, 2) + Math.pow(lng2 - lng1, 2));
+        }
+
+        function toggleGuide() {
+            const modal = document.getElementById('guide-modal');
+            modal.classList.toggle('active');
+        }
+
+        function onCaptchaSuccess(token) {
+            isVerifiedHuman = true;
+            
+            const btn = document.getElementById('scan-btn');
+            btn.disabled = false;
+            btn.title = "Ready to scan";
+            
+            document.getElementById('captcha-container').style.display = 'none';
+            
+            console.log("Humanity confirmed. Scanner unlocked.");
+        }
+
+        async function fetchApiPrediction(userData, currentIssue) {
+            const URL = "https://popularity-predictor.onrender.com/predict"; 
+            const API_KEY = "6dff3f8a3c6015b389c01e4eb799550c";
+
+            const payload = {
+                "elfs": userData.elfs,
+                "wizzards": userData.wizzards,
+                "ruling_party": partyToNumber[userData.ruling_party.name] || 1, 
+                "ruling_party_popularity": parseFloat(userData.ruling_party_popularity),
+                "avg_age": userData.avg_age
+            };
+
+            let token = "";
+            try {
+                token = grecaptcha.getResponse();
+            } catch(e) {}
+
+            try {
+                const response = await fetch(URL, {
+                    method: 'POST',
+                    headers: { "X-API-KEY": API_KEY, "Content-Type": "application/json" },
+                    body: JSON.stringify({...payload, captcha_token: token})
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    return result; 
+                }
+            } catch (e) {
+                console.warn("API Error (using fallback):", e);
+            }
+            alert("Rate limit reached! AI calculations are disabled; using template data instead. Try again later.");
+            return { predictions: { "Centre": 20, "Liberal": 20, "SDE": 20, "Isamaa": 20, "EKRE": 20 } };
+        }
+
+        async function generateMap() {
+            if (!isVerifiedHuman) {
+                alert("Please complete the captcha first.");
+                return;
+            }
+
+            const u = {
+                species: document.getElementById('u-species').value,
+                partyName: document.getElementById('u-party').value,
+                issue: document.getElementById('u-issue').value,
+                class: document.getElementById('u-class').value
+            };
+
+            const btn = document.getElementById('scan-btn');
+            const statusContainer = document.getElementById('status-scanner');
+            const statusText = document.getElementById('status-text');
+            
+            btn.disabled = true;
+            statusContainer.classList.remove('hidden');
+            layerGroup.clearLayers();
+            activeTiles = [];
+
+            const userPartyColor = PARTIES.find(p => p.name === u.partyName)?.color || "#ffffff";
+            
+            const targetCount = 10; // Number of tiles to generate
+            const size = 0.0018;
+            const minDist = size * 2.8;
+
+            for(let i=0; i < targetCount; i++) {
+                statusText.innerText = `SCANNING SECTOR ${i + 1}/${targetCount}`;
+                
+                let lat, lng, valid = false;
+                let attempts = 0;
+                while(!valid && attempts < 100) {
+                    lat = BOUNDS.south + Math.random() * (BOUNDS.north - BOUNDS.south);
+                    lng = BOUNDS.west + Math.random() * (BOUNDS.east - BOUNDS.west);
+                    valid = !activeTiles.some(t => getDistance(lat, lng, t.lat, t.lng) < minDist);
+                    attempts++;
+                }
+                
+                if(!valid) continue; 
+
+                activeTiles.push({ lat, lng });
+
+                const elves = Math.floor(Math.random() * 100);
+                const zone = {
+                    id: i + 1,
+                    ruling_party: PARTIES[Math.floor(Math.random() * PARTIES.length)],
+                    ruling_party_popularity: (Math.random() * 50 + 25).toFixed(1),
+                    avg_age: Math.floor(Math.random() * 50) + 18,
+                    elfs: elves,
+                    wizzards: 100 - elves,
+                    issue: ISSUES[Math.floor(Math.random() * ISSUES.length)],
+                    social_class: CLASSES[Math.floor(Math.random() * CLASSES.length)]
+                };
+                zone.kinPercent = (u.species === "Elf") ? zone.elfs : (100 - zone.elfs);
+
+                const prediction = await fetchApiPrediction(zone, u.issue);
+
+                let q = prediction.predictions ? prediction.predictions[u.partyName] : 50;
+                
+                q += zone.kinPercent / 10;
+                
+                if (zone.social_class === u.class) q += 10;
+                if (zone.issue.name === u.issue) q += 30; // .name added
+
+                createTile(lat, lng, size, zone, userPartyColor, q / 100, u.species);
+            }
+
+            statusText.innerText = "SCAN COMPLETE";
+            setTimeout(() => {
+                statusContainer.classList.add('hidden');
+                btn.disabled = false;
+            }, 1000);
+        }
+
+        function createTile(lat, lng, size, zone, userPartyColor, opacity, userSpecies) {
+            const style = {
+                color: userPartyColor,
+                weight: 1, 
+                fillColor: userPartyColor,
+                fillOpacity: Math.min(0.9, Math.max(0.1, opacity)), // Clamp opacity
+                className: 'neon-tile'
+            };
+
+            const bounds = [[lat - size, lng - size*1.6], [lat + size, lng + size*1.6]];
+            const rect = L.rectangle(bounds, style);
+
+            const html = `
+                <div class="pop-header">
+                    <span>Zone ${zone.id}</span>
+                    <span class="ruling-tag" style="background:${zone.ruling_party.color};">
+                        ${zone.ruling_party.name}
+                    </span>
+                </div>
+                <div class="pop-body">
+                    
+                    <div class="issue-badge">
+                        <span class="issue-icon">${zone.issue.icon}</span>
+                        <div>
+                            <span style="display:block; font-size:0.6rem; color:#aaa; text-transform:uppercase;">Priority</span>
+                            <strong>${zone.issue.name}</strong>
+                        </div>
+                    </div>
+
+                    <div class="stat-grid">
+                        <div class="stat-box">
+                            <span class="stat-label">Avg Age</span>
+                            <span class="stat-val">${zone.avg_age}</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-label">${userSpecies} %</span>
+                            <span class="stat-val" style="color:${userPartyColor}">${zone.kinPercent}%</span>
+                        </div>
+                        <div class="stat-box" style="grid-column: span 2">
+                            <span class="stat-label">Social Class</span>
+                            <span class="stat-val" style="font-size:0.8rem">${zone.social_class}</span>
+                        </div>
+                    </div>
+
+                    <div class="bar-container">
+                        <div class="bar-meta">
+                            <span>Approval Rating</span>
+                            <span>${zone.ruling_party_popularity}%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="fill" style="width:${zone.ruling_party_popularity}%; background:${zone.ruling_party.color}"></div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:12px; font-size:0.65rem; color:#64748B; text-align:center; border-top:1px solid #334155; padding-top:8px;">
+                        <em>Scanner Match: ${Math.round(opacity*100)}%</em>
+                    </div>
+                </div>
+            `;
+
+            rect.bindPopup(html);
+            
+            rect.on('mouseover', function() { 
+                this.setStyle({ weight: 3, color: '#fff', fillOpacity: Math.min(1, opacity + 0.2) });
+            });
+            rect.on('mouseout', function() { 
+                this.setStyle({ weight: 1, color: userPartyColor, fillOpacity: Math.min(0.9, Math.max(0.1, opacity)) });
+            });
+
+            rect.addTo(layerGroup);
+        }
+    </script>
+</body>
+</html>

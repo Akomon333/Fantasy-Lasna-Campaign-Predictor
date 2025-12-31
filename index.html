@@ -478,6 +478,10 @@
 
         let token = "";
 
+        try {
+                token = grecaptcha.getResponse();
+            } catch(e) {}
+
         const CLASSES = ["Working Class", "Middle Class", "Elite"];
 
         const BOUNDS = { south: 59.422, north: 59.445, west: 24.790, east: 24.900 };
@@ -528,10 +532,6 @@
                 "ruling_party_popularity": parseFloat(userData.ruling_party_popularity),
                 "avg_age": userData.avg_age
             };
-            try {
-                token = grecaptcha.getResponse();
-            } catch(e) {}
-
             try {
                 const response = await fetch(URL, {
                     method: 'POST',

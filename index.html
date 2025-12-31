@@ -514,7 +514,7 @@
             btn.title = "Ready to scan";
             
             document.getElementById('captcha-container').style.display = 'none';
-            console.log("Humanity confirmed. Token saved.");
+            console.log("User confirmed");
         }
 
         async function fetchApiPrediction(userData, currentIssue) {
@@ -533,6 +533,7 @@
                 const response = await fetch(URL, {
                     method: 'POST',
                     headers: { "X-API-KEY": API_KEY, "Content-Type": "application/json" },
+                    credentials: 'include',
                     body: JSON.stringify({...payload, captcha_token: globalCaptchaToken}) 
                 });
                 

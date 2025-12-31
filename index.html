@@ -683,12 +683,6 @@
                 </div>
             `;
 
-            try {
-            token = grecaptcha.getResponse();
-             } catch(e) {
-                console.log(e);
-             }
-
             rect.bindPopup(html);
             
             rect.on('mouseover', function() { 

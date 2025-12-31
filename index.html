@@ -478,10 +478,6 @@
 
         let token = "";
 
-        try {
-                token = grecaptcha.getResponse();
-            } catch(e) {}
-
         const CLASSES = ["Working Class", "Middle Class", "Elite"];
 
         const BOUNDS = { south: 59.422, north: 59.445, west: 24.790, east: 24.900 };
@@ -686,6 +682,12 @@
                     </div>
                 </div>
             `;
+
+            try {
+            token = grecaptcha.getResponse();
+             } catch(e) {
+                console.log(e);
+             }
 
             rect.bindPopup(html);
             

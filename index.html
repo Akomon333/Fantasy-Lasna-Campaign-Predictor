@@ -387,7 +387,7 @@
             <div class="g-recaptcha" data-sitekey="6LdhQzksAAAAAPR-p7f7GAXXe1aOr0yOz7xBA_nQ" data-callback="onCaptchaSuccess"></div>
         </div>
 
-        <button id="scan-btn" class="scan-btn" onclick="generateMap()" disabled title="Please verify you are human first">SCAN SECTOR</button>
+        <button id="scan-btn" class="scan-btn" onclick="generateMap()" disabled title="Please verify you are human first">Generate tiles</button>
         
         <div id="status-container">
             <div id="status-scanner" class="hidden">
@@ -402,11 +402,11 @@
     <div id="guide-modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h2>How does the scanner works?</h2>
+            <h2>How does the tiles generator works?</h2>
         </div>
         <div class="modal-body">
             <p style="font-size:0.85rem; color:#94A3B8; margin-top:0; margin-bottom:20px; border-left: 2px solid var(--accent); padding-left: 10px;">
-                <strong>Official Manual:</strong> The scanner uses a weighted algorithm to determine the best tile to campaign in. Tile data is randomly generated. 
+                <strong>Official Manual:</strong> The tiles generator uses a weighted algorithm to determine the best tile to campaign in. Tile data is randomly generated. 
             </p>
 
             <div class="logic-step">
@@ -641,7 +641,7 @@
 
             const html = `
                 <div class="pop-header">
-                    <span>Zone ${zone.id}</span>
+                    <span>Tile ${zone.id}</span>
                     <span class="ruling-tag" style="background:${zone.ruling_party.color};">
                         ${zone.ruling_party.name}
                     </span>
